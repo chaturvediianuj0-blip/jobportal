@@ -1,3 +1,4 @@
 print('JobPortal starting...')
 print('Hello from JobPortal')
-echo 'new line'
+new line
+from homepage import get_homepage
