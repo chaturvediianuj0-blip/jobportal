@@ -5,3 +5,4 @@ from homepage import get_homepage
 # bugfix
 print('from main branch')
 print('from feature branch')
+print('Hello from main branch')
