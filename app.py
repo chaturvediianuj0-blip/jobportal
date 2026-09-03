@@ -6,3 +6,4 @@ from homepage import get_homepage
 print('from main branch')
 print('from feature branch')
 print('Hello from main branch')
+print('Hello from feature branch')
