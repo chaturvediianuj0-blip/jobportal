@@ -3,7 +3,11 @@ def list_jobs(): return []
 # work in progress
 def search_jobs(): pass
 def search_jobs(keyword):
-    return [job for job in list_jobs() if keyword in job]
+    jobs = list_jobs()
+    return [j for j in jobs if keyword.lower() in str(j).lower()]
+def search_jobs_by_location(location):
+    jobs = list_jobs()
+    return [j for j in jobs if location in str(j)]
 def sort_jobs(jobs, key='title'):
     return sorted(jobs, key=lambda j: j.get(key, ''))
 def filter_by_location(location):
