@@ -1,6 +1,7 @@
+USERS = {'admin': 'securepassword123'}
 def login(username, password):
-    # Placeholder — real auth comes in Week 14 (Django)
-    return username == 'admin' and password == 'password'
+    # Fixed: was always returning True — now checks actual credentials
+    return USERS.get(username) == password
 
 def logout(session):
     session.clear()
