@@ -15,7 +15,7 @@ pipeline {
         }
         stage('Install') {
             steps {
-                echo "Installing dependencies for ${APP_NAME} from requirements.txt"
+                echo "Installing dependencies from requirements.txt"
                 sh '${PYTHON} -m pip install --upgrade pip'
                 sh '${PYTHON} -m pip install -r requirements.txt'
                 sh '${PYTHON} -m pip list'
@@ -23,14 +23,14 @@ pipeline {
         }
         stage('Test') {
             steps {
-                echo "Running tests suite for ${APP_NAME}"
+                echo "Running tests suite"
                 sh '${PYTHON} -m pytest -v --tb=short'
             }
         }
     }
     post {
         always {
-            echo "Pipeline finished for ${APP_NAME} - Result: $(currentBuild.result)"
+            echo "Pipeline finished - Result: $(currentBuild.result)"
         }
         success {
             echo 'All tests passed — JobPortal is healthy'
