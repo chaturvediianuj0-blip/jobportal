@@ -1,7 +1,6 @@
 print('JobPortal v0.1.1 — started by dev1 and dev2')
 print('JobPortal starting...')
 print('Hello from JobPortal')
-new line
 from homepage import get_homepage
 # bugfix
 print('from main branch')
