@@ -14,6 +14,7 @@ pipeline {
     }
     environment {
         APP_NAME = 'jobportal'
+        PYTHON   = 'python3'
         VENV_DIR = 'venv'
     }
     stages {
@@ -24,8 +25,8 @@ pipeline {
                 echo "Branch : ${env.GIT_BRANCH}"
                 echo "Commit : ${env.GIT_COMMIT}"
                 sh "ls -la"
-                sh 'git log --oneline -3'
-                sh '${PYTHON} --version'
+                sh "git log --oneline -3"
+                sh "${PYTHON} --version"
             }
         }
         stage('Install') {
