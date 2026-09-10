@@ -64,7 +64,8 @@ pipeline {
                 )]) {
                     sh 'echo GitHub username : $GH_USER'
                     sh 'echo GitHub password : $GH_PASS and password length is: ${#GH_PASS} characters'
-            }
+                    }
+                }
         }
         stage('Deploy Info') {
             when {
