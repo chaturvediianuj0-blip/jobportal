@@ -55,8 +55,8 @@ pipeline {
             steps {
                 echo "Verifying GitHub token is available (masked)"
                 sh 'echo Token is: $GITHUB_TOKEN and Token length is: ${#GITHUB_TOKEN} characters'
-                # Token value is masked — echo would print ****
-                # Length check confirms it is set without revealing value
+                // Token value is masked — echo would print ****
+                // Length check confirms it is set without revealing value
                 withCredentials([usernamePassword(
                     credentialsId: 'github-pat', 
                     usernameVariable: 'GH_USER', 
