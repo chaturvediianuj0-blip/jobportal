@@ -16,6 +16,7 @@ pipeline {
         APP_NAME = 'jobportal'
         PYTHON   = 'python3'
         VENV_DIR = 'venv'
+        GITHUB_TOKEN = credentials('github-pat')
     }
     stages {
         stage('Checkout') {
@@ -48,6 +49,21 @@ pipeline {
                     . ${VENV_DIR}/bin/activate
                     pytest -v --tb=short
                 """
+            }
+        }
+        stage('Verify Credentials') {
+            steps {
+                echo "Verifying GitHub token is available (masked)"
+                sh 'echo Token is: $GITHUB_TOKEN and Token length is: ${#GITHUB_TOKEN} characters'
+                # Token value is masked — echo would print ****
+                # Length check confirms it is set without revealing value
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-pat', 
+                    usernameVariable: 'GH_USER', 
+                    passwordVariable: 'GH_PASS'
+                )]) {
+                    sh 'echo GitHub username : $GH_USER'
+                    sh 'echo GitHub password : $GH_PASS and password length is: ${#GH_PASS} characters'
             }
         }
         stage('Deploy Info') {
