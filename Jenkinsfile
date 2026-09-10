@@ -58,7 +58,7 @@ pipeline {
                 // Token value is masked — echo would print ****
                 // Length check confirms it is set without revealing value
                 withCredentials([usernamePassword(
-                    credentialsId: 'github-pat', 
+                    credentialsId: 'github-userpass', 
                     usernameVariable: 'GH_USER', 
                     passwordVariable: 'GH_PASS'
                 )]) {
