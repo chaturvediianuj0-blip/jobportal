@@ -246,3 +246,4 @@ Resume line: *Built Jenkins CI pipeline from scratch — webhook trigger, parall
 
 ### Week 3 — Coming next
 Maven build tool, Nexus artifact repository, SonarQube code quality analysis.
+README'
