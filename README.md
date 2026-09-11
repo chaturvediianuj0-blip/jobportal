@@ -86,6 +86,7 @@ Releases are tagged using annotated Git tags:
 ```bash
 git tag -a v0.1.0 -m 'Release description'
 git push origin v0.1.0
+```
 
 ## Week 1 — Git + GitHub
 
@@ -99,8 +100,10 @@ git push origin v0.1.0
 - Used git blame and git bisect for debugging practice
 
 ### Commands I can use confidently
+```bash
 git init, add, commit, push, pull, branch, checkout, merge, rebase,
 stash, cherry-pick, log, diff, blame, bisect, tag, revert, reset
+```
 
 ### What comes next — Week 2
 Jenkins CI: automated pipeline that triggers on every push to GitHub.
@@ -125,7 +128,7 @@ Each week adds a new tool to the stack — from Git to Kubernetes.
 
 ## Project Structure
 
-```
+```text
 jobportal/
 ├── app.py          # Application entry point
 ├── homepage.py     # Homepage module
@@ -145,7 +148,7 @@ jobportal/
 
 ### Architecture
 
-```
+```text
 Developer pushes code
         │
         ▼
@@ -205,7 +208,7 @@ python3 app.py
 ```
 
 ### Jenkins setup
-```
+```text
 Jenkins URL    : http://<EC2-PUBLIC-IP>:8080
 Job name       : jobportal-pipeline
 Job type       : Pipeline (from SCM)
@@ -246,4 +249,3 @@ Resume line: *Built Jenkins CI pipeline from scratch — webhook trigger, parall
 
 ### Week 3 — Coming next
 Maven build tool, Nexus artifact repository, SonarQube code quality analysis.
-README'
