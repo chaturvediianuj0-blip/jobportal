@@ -22,3 +22,7 @@ def test_search_jobs_returns_list():
     from jobs import search_jobs
     result = search_jobs("engineer")
     assert isinstance(result, list)
+    
+def test_format_job_title():
+    from utils import format_job_title
+    assert format_job_title('  software engineer  ') == 'Software Engineer'
