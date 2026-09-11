@@ -64,7 +64,7 @@ pipeline {
                         echo "Checking Python Syntax"
                         sh """
                             . ${VENV_DIR}/bin/activate
-                            py_compile app.py homepage.py jobs.py auth.py'
+                            ${PYTHON} -m py_compile app.py homepage.py jobs.py auth.py
                         """
                         echo 'All files syntax OK'
                     }
