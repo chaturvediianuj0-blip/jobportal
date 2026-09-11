@@ -75,7 +75,7 @@ pipeline {
             when {
                 allOf {
                     expression { params.BUILD_ENV != 'prod' }
-                    branch 'origin/main'
+                    expression {env.GIT_BRANCH == '/origin/main/' || env.GIT_BRANCH == 'main'}
                 }
             }
             steps {
