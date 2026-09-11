@@ -91,7 +91,6 @@ pipeline {
             }
             steps {
                 echo 'Production deployment requires manual approval'
-                input message: "Deploy to production?", ok: "Deploy"
             }   
         }
     }
