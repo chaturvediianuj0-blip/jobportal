@@ -1,5 +1,11 @@
 pipeline {
     agent any
+    options {
+        timeout(time: 20, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        disableConcurrentBuilds()
+        timestamps()
+    }
     parameters {
         choice(
             name: 'BUILD_ENV', 
@@ -21,7 +27,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo "=== ${APP_NAME} Build #${BUILD_NUMBER} ==="
+                echo "=== ${APP_NAME} | Build #${BUILD_NUMBER} | ${params.BUILD_ENV} ==="
                 echo "Environment: ${params.BUILD_ENV}"
                 echo "Branch : ${env.GIT_BRANCH}"
                 echo "Commit : ${env.GIT_COMMIT}"
@@ -42,50 +48,69 @@ pipeline {
                 """
             }
         }
-        stage('Test') {
-            steps {
-                echo "Running test suite inside virtual environment"
-                sh """
-                    . ${VENV_DIR}/bin/activate
-                    pytest -v --tb=short
-                """
-            }
-        }
-        stage('Verify Credentials') {
-            steps {
-                echo "Verifying GitHub token is available (masked)"
-                sh 'echo Token is: $GITHUB_TOKEN and Token length is: ${#GITHUB_TOKEN} characters'
-                // Token value is masked — echo would print ****
-                // Length check confirms it is set without revealing value
-                withCredentials([usernamePassword(
-                    credentialsId: 'github-userpass', 
-                    usernameVariable: 'GH_USER', 
-                    passwordVariable: 'GH_PASS'
-                )]) {
-                    sh 'echo GitHub username : $GH_USER'
-                    sh 'echo GitHub password : $GH_PASS and password length is: ${#GH_PASS} characters'
+        stage('Quality Checks') {
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        echo "Running unit tests"
+                        sh """
+                            . ${VENV_DIR}/bin/activate
+                            pytest -v --tb=short
+                        """
                     }
                 }
+                stage('Syntax Check') {
+                    steps {
+                        echo "Checking Python Syntax"
+                        sh """
+                            . ${VENV_DIR}/bin/activate
+                            py_compile app.py homepage.py jobs.py auth.py'
+                        """
+                        echo 'All files syntax OK'
+                    }
+                }
+            }
         }
         stage('Deploy Info') {
             when {
-                expression {  params.BUILD_ENV == 'dev' }
+                allOf {
+                    expression { params.BUILD_ENV != 'prod' }
+                    branch 'main'
+                }
             }
             steps {
-                echo "Would deploy to DEV environment here"
-                echo "Build tag: ${APP_NAME}-${BUILD_NUMBER}"
+                echo "Deploying ${APP_NAME}-${BUILD_NUMBER} to ${params.BUILD_ENV}"
+                echo "Build tag: ${APP_NAME}:${GIT_COMMIT.take(7)}"
             }
+        }
+        stage('Prod Gate'){
+            when {
+                allOf {
+                    expression { params.BUILD_ENV == 'prod' }
+                }
+            }
+            steps {
+                echo 'Production deployment requires manual approval'
+                input message: "Deploy to production?", ok: "Deploy"
+            }   
         }
     }
     post {
         always {
-            echo "Build #${BUILD_NUMBER} finished - Result: ${currentBuild.currentResult}"
+            echo "=== Build #${BUILD_NUMBER} complete: ${currentBuild.currentResult} ==="
+            cleanWs()
         }
         success {
-            echo "SUCCESS - ${APP_NAME} is healthy on ${params.BUILD_ENV} environment"
+            echo "SUCCESS — ${APP_NAME} CI passed on ${params.BUILD_ENV}"
         }
         failure {
-            echo "FAILURE — check console output for Build #${BUILD_NUMBER}"
+            echo "FAILURE — check Build #${BUILD_NUMBER} console output"
+        }
+        fixed {
+            echo 'Pipeline recovered — was broken, now passing'
+        }
+        regression {
+            echo 'Pipeline regressed — was passing, now broken'
         }
     }
 }
