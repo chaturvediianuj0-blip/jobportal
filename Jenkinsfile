@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    tools {
+        maven 'Maven-3'
+    }
     options {
         timeout(time: 20, unit: 'MINUTES')
         buildDiscarder(logRotator(numToKeepStr: '10'))
@@ -36,7 +39,7 @@ pipeline {
                 sh "${PYTHON} --version"
             }
         }
-        stage('Install') {
+        stage('Python : Install') {
             steps {
                 echo "Creating virtual environment and installing dependencies"
                 sh """
@@ -48,50 +51,28 @@ pipeline {
                 """
             }
         }
-        stage('Quality Checks') {
-            parallel {
-                stage('Unit Tests') {
-                    steps {
-                        echo "Running unit tests"
-                        sh """
-                            . ${VENV_DIR}/bin/activate
-                            pytest -v --tb=short
-                        """
-                    }
-                }
-                stage('Syntax Check') {
-                    steps {
-                        echo "Checking Python Syntax"
-                        sh """
-                            . ${VENV_DIR}/bin/activate
-                            ${PYTHON} -m py_compile app.py homepage.py jobs.py auth.py
-                        """
-                        echo 'All files syntax OK'
-                    }
+        stage('Python : Test') {
+            stage() {
+                echo 'Running Python tests'
+                sh '${PYTHON} -m pytest -v --tb=short'
+            }
+        }
+        stage('Maven : Build') {
+            steps {
+                echo 'Building Java application with Maven'
+                dir('hello-java') {
+                    sh 'mvn clean package'
+                    sh 'ls -lh target/*.jar'
                 }
             }
         }
-        stage('Deploy Info') {
-            when {
-                allOf {
-                    expression { params.BUILD_ENV != 'prod' }
-                    expression {env.GIT_BRANCH == '/origin/main/' || env.GIT_BRANCH == 'main'}
+        stage('Maven : Test Results') {
+            steps {
+                dir('hello-java') {
+                    echo 'Maven Tests Completed'
+                    sh 'cat target/surefire-reports/*.txt 2>/dev/null || echo No surefire txt reports'
                 }
             }
-            steps {
-                echo "Deploying ${APP_NAME}-${BUILD_NUMBER} to ${params.BUILD_ENV}"
-                echo "Build tag: ${APP_NAME}:${GIT_COMMIT.take(7)}"
-            }
-        }
-        stage('Prod Gate'){
-            when {
-                allOf {
-                    expression { params.BUILD_ENV == 'prod' }
-                }
-            }
-            steps {
-                echo 'Production deployment requires manual approval'
-            }   
         }
     }
     post {
