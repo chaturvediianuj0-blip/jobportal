@@ -54,7 +54,10 @@ pipeline {
         stage('Python : Test') {
             steps {
                 echo 'Running Python tests'
-                sh '${PYTHON} -m pytest -v --tb=short'
+                sh """
+                    . ${VENV_DIR}/bin/activate
+                    pytest -v --tb=short
+                    """
             }
         }
         stage('Maven : Build') {
