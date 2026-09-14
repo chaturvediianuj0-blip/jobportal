@@ -52,7 +52,7 @@ pipeline {
             }
         }
         stage('Python : Test') {
-            stage() {
+            steps {
                 echo 'Running Python tests'
                 sh '${PYTHON} -m pytest -v --tb=short'
             }
