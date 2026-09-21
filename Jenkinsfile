@@ -69,14 +69,15 @@ pipeline {
                 }
             }
         }
-        stage('Maven : Test Results') {
-            steps {
-                dir('hello-java') {
-                    echo 'Maven Tests Completed'
-                    sh 'cat target/surefire-reports/*.txt 2>/dev/null || echo No surefire txt reports'
+	stage('Maven : Deploy to Nexus') {
+	    steps {
+	        dir('hello-java') {
+                    echo 'Deploying artifact to Nexus'
+                    sh 'mvn deploy -DskipTests'
+                    echo "Artifact deployed: ${APP_NAME}:${env.BUILD_NUMBER}"
                 }
-            }
-        }
+    	    }
+	}
     }
     post {
         always {
