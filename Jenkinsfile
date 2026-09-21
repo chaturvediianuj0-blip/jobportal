@@ -73,7 +73,7 @@ pipeline {
 	    steps {
 	        dir('hello-java') {
                     echo 'Deploying artifact to Nexus'
-                    sh 'mvn deploy -DskipTests'
+                    sh 'mvn deploy -s /var/lib/jenkins/.m2/settings.xml -DskipTests'
                     echo "Artifact deployed: ${APP_NAME}:${env.BUILD_NUMBER}"
                 }
     	    }
