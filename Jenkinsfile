@@ -100,9 +100,11 @@ pipeline {
                 echo 'Running SonarQube analysis on Java code'
                 dir('hello-java') {
                     withSonarQubeEnv('SonarQube') {
-                        sh """
-                            mvn sonar:sonar
-                        """
+                        sh '''
+                            mvn org.sonarsource.scanner.maven:sonar-maven-plugin:5.2.0.4988:sonar \
+                            -Dsonar.host.url=$SONAR_HOST_URL \
+                            -Dsonar.token=$SONAR_AUTH_TOKEN
+                        '''
                     }
                 }
             }
