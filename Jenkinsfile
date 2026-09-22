@@ -60,6 +60,27 @@ pipeline {
                     """
             }
         }
+        stage('Sonarqube Analysis') {
+            steps {
+                echo 'Running SonarQube static code analysis'
+                sh """
+                    . ${VENV_DIR}/bin/activate
+                    pytest --cov=. --cov-report=xml:coverage.xml -q
+                    """
+                withSonarQubeEnv('SonarQube') {
+                    sh """
+                        sonar-scanner -Dsonar.token=$SONAR_AUTH_TOKEN
+                        """
+            }
+        }
+        stage('Quality Gate') {
+            steps {
+                echo 'Checking SonarQube Quality Gate status'
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
         stage('Maven : Build') {
             steps {
                 echo 'Building Java application with Maven'
@@ -69,15 +90,15 @@ pipeline {
                 }
             }
         }
-	stage('Maven : Deploy to Nexus') {
-	    steps {
-	        dir('hello-java') {
+        stage('Maven : Deploy to Nexus') {
+            steps {
+                dir('hello-java') {
                     echo 'Deploying artifact to Nexus'
                     sh 'mvn deploy -DskipTests'
                     echo "Artifact deployed: ${APP_NAME}:${env.BUILD_NUMBER}"
                 }
-    	    }
-	}
+            }
+        }
     }
     post {
         always {
