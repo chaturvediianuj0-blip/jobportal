@@ -66,11 +66,12 @@ pipeline {
                 sh """
                     . ${VENV_DIR}/bin/activate
                     pytest --cov=. --cov-report=xml:coverage.xml -q
-                    """
+                """
                 withSonarQubeEnv('SonarQube') {
                     sh """
                         sonar-scanner -Dsonar.token=$SONAR_AUTH_TOKEN
-                        """
+                    """
+                }
             }
         }
         stage('Quality Gate') {
