@@ -1,0 +1,15 @@
+
+__pycache__/
+
+*.pyc
+
+.git/
+
+hello-java/target/
+
+coverage.xml
+
+junit-report.xml
+
+*.md
+
