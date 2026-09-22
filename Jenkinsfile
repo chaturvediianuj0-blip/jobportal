@@ -26,7 +26,7 @@ pipeline {
         PYTHON   = 'python3'
         VENV_DIR = 'venv'
         GITHUB_TOKEN = credentials('github-pat')
-        SONAR_TOKEN = credentials('sonar-token-hello-java')
+        SONAR_TOKEN = credentials('sonar-token')
     }
     stages {
         stage('Checkout') {
@@ -68,11 +68,7 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh """
                         . ${VENV_DIR}/bin/activate
-                        /opt/sonar-scanner/bin/sonar-scanner \
-                            -Dsonar.projectKey=hello-java \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=http://localhost:9000 \
-                            -Dsonar.token=${SONAR_TOKEN}
+                        /opt/sonar-scanner/bin/sonar-scanner
                     """
                 }
             }
@@ -105,10 +101,7 @@ pipeline {
                 dir('hello-java') {
                     withSonarQubeEnv('SonarQube') {
                         sh """
-                            mvn sonar:sonar \
-                                -Dsonar.projectKey=hello-java \
-                                -Dsonar.host.url=http://localhost:9000 \
-                                -Dsonar.token=${SONAR_TOKEN}
+                            mvn sonar:sonar
                         """
                     }
                 }
