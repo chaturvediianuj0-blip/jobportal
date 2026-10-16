@@ -1,15 +1,57 @@
 
+# Python cache
+
 __pycache__/
 
 *.pyc
 
-.git/
+*.pyo
 
-hello-java/target/
+.pytest_cache/
+
+
+
+# Test and coverage files — not needed in container
+
+test_app.py
 
 coverage.xml
 
 junit-report.xml
 
-*.md
+.coverage
+
+
+
+# Git — not needed in container
+
+.git/
+
+.gitignore
+
+
+
+# CI/Build files — not needed in container
+
+Jenkinsfile
+
+sonar-project.properties
+
+pom.xml
+
+hello-java/
+
+
+
+# Docker files themselves
+
+Dockerfile
+
+.dockerignore
+
+
+
+# Documentation
+
+README.md
 

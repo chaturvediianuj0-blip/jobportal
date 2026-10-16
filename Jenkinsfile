@@ -118,6 +118,14 @@ pipeline {
                 }
             }
         }
+	stage('Docker: Build') {
+	    steps {
+		echo "Building Docker image: ${APP_NAME}:${GIT_COMMIT.take(7)}"
+		sh "docker build -t ${APP_NAME}:${GIT_COMMIT.take(7)} ."
+		sh "docker build -t ${APP_NAME}:latest ."
+		sh 'docker images | grep jobportal'
+	    }
+	}
         stage('Summary') {
             steps {
                 echo "=== Build #${BUILD_NUMBER} Summary ==="
