@@ -29,7 +29,7 @@ pipeline {
         SONAR_TOKEN = credentials('sonar-token')
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
-        ECR_REGISTRY = 481048605935.dkr.ecr.us-east-1.amazonaws.com/jobportal
+        ECR_REGISTRY = '481048605935.dkr.ecr.us-east-1.amazonaws.com/jobportal'
         ECR_REPO = 'jobportal'
     }
     stages {
