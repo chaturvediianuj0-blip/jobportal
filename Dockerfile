@@ -1,33 +1,43 @@
-# Base image: Python 3.11 on slim Debian (smaller than full debian)
-FROM python:3.11-slim
+# Full Python image — install dependencies here
+# This stage is discarded in the final image
+# ═══════════════════════════════════════════════════════════════
+FROM python:3.11 AS builder
+WORKDIR /build
 
-# Metadata
-LABEL maintainer="Anuj Chaturvedi"
-LABEL project="jobportal"
-LABEL week="4"
-
-# Set working directory inside container
-WORKDIR /app
-
-# Copy requirements FIRST — layer caching optimisation
-# This layer only rebuilds when requirements.txt changes
+# Copy only requirements — not source code
 COPY requirements.txt .
 
-# Install Python dependencies
-# --no-cache-dir: do not store pip cache in image (keeps image smaller)
-RUN pip install --no-cache-dir -r requirements.txt
+# Install packages into /install prefix
+# --prefix: install to specific directory so we can copy it cleanly
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Copy application code AFTER dependencies
-# This layer rebuilds on every code change — but pip install above is cached
+# ═══════════════════════════════════════════════════════════════
+# Stage 2: Runtime
+# Slim Python image — only what the app needs to RUN
+# No build tools, no pip cache, no compiler
+# ═══════════════════════════════════════════════════════════════
+FROM python:3.11-slim AS runtime
+
+LABEL maintainer="Anuj Chaturvedi"
+LABEL project="jobportal"
+LABEL stage="Week 4 — Multi-stage build"
+
+WORKDIR /app
+
+# Copy installed packages from builder stage ONLY
+# Everything else from the builder stage is left behind
+COPY --from=builder /install /usr/local
+
+# Copy only the application source files needed at runtime
 COPY app.py homepage.py jobs.py auth.py categories.py config.py utils.py ./
 
-# Document which port the app listens on
-# This does NOT open the port — it is documentation + hint for -p flag
 EXPOSE 5000
 
-# Set environment variables
 ENV FLASK_ENV=production
 ENV PYTHONUNBUFFERED=1
 
-# Default command to run when container starts
-CMD ["python3", "app.py"]
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser
+USER appuser
+
+CMD ["python3","app.py"]
