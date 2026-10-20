@@ -133,12 +133,12 @@ pipeline {
         stage('Docker: Push to ECR') {
             steps {
                 echo 'Pushing image to ECR'
-                sh '''
+                sh """
                     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_REGISTRY}
                     docker tag ${APP_NAME}:${GIT_COMMIT.take(7)} ${ECR_REGISTRY}/${ECR_REPO}:${GIT_COMMIT.take(7)}
                     docker push ${ECR_REGISTRY}/${ECR_REPO}:${GIT_COMMIT.take(7)}
                     echo "Pushed: ${ECR_REGISTRY}/${ECR_REPO}:${GIT_COMMIT.take(7)}"
-                '''
+                """
             }
         }
         stage('Summary') {
