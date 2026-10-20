@@ -27,6 +27,10 @@ pipeline {
         VENV_DIR = 'venv'
         GITHUB_TOKEN = credentials('github-pat')
         SONAR_TOKEN = credentials('sonar-token')
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+        ECR_REGISTRY = 481048605935.dkr.ecr.us-east-1.amazonaws.com/jobportal
+        ECR_REPO = 'jobportal'
     }
     stages {
         stage('Checkout') {
@@ -118,14 +122,25 @@ pipeline {
                 }
             }
         }
-	stage('Docker: Build') {
-	    steps {
-		echo "Building Docker image: ${APP_NAME}:${GIT_COMMIT.take(7)}"
-		sh "docker build -t ${APP_NAME}:${GIT_COMMIT.take(7)} ."
-		sh "docker build -t ${APP_NAME}:latest ."
-		sh 'docker images | grep jobportal'
-	    }
-	}
+        stage('Docker: Build') {
+            steps {
+            echo "Building Docker image: ${APP_NAME}:${GIT_COMMIT.take(7)}"
+            sh "docker build -t ${APP_NAME}:${GIT_COMMIT.take(7)} ."
+            sh "docker build -t ${APP_NAME}:latest ."
+            sh 'docker images | grep jobportal'
+            }
+        }
+        stage('Docker: Push to ECR') {
+            steps {
+                echo 'Pushing image to ECR'
+                sh '''
+                    aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                    docker tag ${APP_NAME}:${GIT_COMMIT.take(7)} ${ECR_REGISTRY}/${ECR_REPO}:${GIT_COMMIT.take(7)}
+                    docker push ${ECR_REGISTRY}/${ECR_REPO}:${GIT_COMMIT.take(7)}
+                    echo "Pushed: ${ECR_REGISTRY}/${ECR_REPO}:${GIT_COMMIT.take(7)}"
+                '''
+            }
+        }
         stage('Summary') {
             steps {
                 echo "=== Build #${BUILD_NUMBER} Summary ==="
