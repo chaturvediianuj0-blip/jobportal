@@ -37,5 +37,21 @@ def db_check():
     except Exception as e:
         return jsonify({'db': 'error', 'message': str(e)}), 500
 
+@app.route('/cache-check')
+def cache_check():
+    try:
+        import redis
+        r = redis.Redis(
+            host=os.environ.get('REDIS_HOST', 'redis'),
+            port=int(os.environ.get('REDIS_PORT', 6379)),
+            password=os.environ.get('REDIS_PASSWORD', ''),
+            decode_responses=True
+        )
+        r.set('health_check', 'ok', ex=60)
+        val = r.get('health_check')
+        return jsonify({'redis': 'connected', 'test_value': val})
+    except Exception as e:
+        return jsonify({'redis': 'error', 'message': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)

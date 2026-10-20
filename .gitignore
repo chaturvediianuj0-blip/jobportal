@@ -2,3 +2,5 @@ coverage.xml
 .coverage
 coverage.xml
 .coverage
+.env
+.env.local
