@@ -4,12 +4,13 @@
 > Each week adds production tools to the stack — from Git to Kubernetes.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Week-4%20of%2017-blue" alt="Week 4 of 17">
+  <img src="https://img.shields.io/badge/Week-5%20of%2017-blue" alt="Week 5 of 17">
   <img src="https://img.shields.io/badge/CI-Jenkins-red" alt="CI: Jenkins">
   <img src="https://img.shields.io/badge/Quality-SonarQube-orange" alt="Quality: SonarQube">
   <img src="https://img.shields.io/badge/Artifacts-Nexus-green" alt="Artifacts: Nexus">
   <img src="https://img.shields.io/badge/Container-Docker-2496ED" alt="Container: Docker">
   <img src="https://img.shields.io/badge/Registry-AWS%20ECR-FF9900" alt="Registry: AWS ECR">
+  <img src="https://img.shields.io/badge/Cloud-AWS%20ap--south--1-FF9900" alt="Cloud: AWS ap-south-1">
 </p>
 
 ## Explore
@@ -19,6 +20,7 @@
 - [Project structure](#project-structure)
 - [Pipeline details](#pipeline-details)
 - [Docker](#docker)
+- [AWS infrastructure](#aws-infrastructure-week-5)
 - [Setup](#setup)
 - [Releases](#releases)
 - [Week-by-week progress](#week-by-week-progress)
@@ -38,7 +40,12 @@
 | PostgreSQL | 15 | Application database (container) | 5432 (internal) |
 | Redis | 7 | Cache (container) | 6379 (internal) |
 | Docker Hub / AWS ECR | — | Container image registries | — |
-| EC2 Ubuntu | t2.large | Hosts all services | — |
+| EC2 Ubuntu | t2.large | Hosts Jenkins, Nexus, SonarQube, and Docker | — |
+| AWS VPC + EC2 + EBS + AMI | — | `jobportal-vpc`, golden AMI, gp3 volumes | — |
+| AWS IAM | — | `ec2-jobportal` instance profile; no access keys | — |
+| AWS S3 | — | `jobportal-static` bucket for static assets and uploads | — |
+| AWS CloudWatch + SNS | — | CPU alarms and email notifications | — |
+| AWS Auto Scaling | — | `jobportal-asg`, 1–3 instances, CPU target tracking | — |
 
 ## Architecture
 
@@ -82,6 +89,25 @@ All services run on the `jobportal-net` Docker network.
 
 </details>
 
+<details open>
+<summary><strong>AWS infrastructure — Week 5 · ap-south-1</strong></summary>
+
+```text
+Internet -> IGW -> VPC jobportal-vpc (10.0.0.0/16)
+  public  10.0.1.0/24 (rt-public: 0.0.0.0/0 -> IGW)
+          NAT Gateway + EIP, bastion/web EC2, ASG jobportal-asg
+          (launch template jobportal-lt -> golden AMI, IAM role, IMDSv2)
+  private 10.0.2.0/24 (rt-private: 0.0.0.0/0 -> NAT)
+          app EC2; RDS planned for Week 7
+Regional: S3 jobportal-static (/static/* public, uploads/ private, tmp/ lifecycle)
+          IAM role ec2-jobportal, CloudWatch -> SNS jobportal-alerts -> email
+```
+
+The NAT Gateway is created only when needed to manage hourly costs. The S3 bucket name
+includes the AWS account identifier; public object access is limited to `static/*`.
+
+</details>
+
 ## Project Structure
 
 ```text
@@ -103,7 +129,9 @@ jobportal/
 ├── sonar-project.properties
 ├── pom.xml                   # Root Maven placeholder
 ├── hello-java/               # Java app (Maven): pom.xml, src/main, src/test
+├── static/                   # CSS, JS, images; served from S3 under /static/*
 ├── docs/incidents/           # Week 4 incident reports (root cause + fix)
+├── docs/architecture/        # Week 5 AWS diagram and service overview
 ├── .gitignore
 └── README.md
 ```
@@ -167,6 +195,30 @@ Every push to GitHub fires a webhook to Jenkins. No manual steps.
 
 </details>
 
+## AWS Infrastructure (Week 5)
+
+<details>
+<summary><strong>Services, configuration, and operations</strong></summary>
+
+| Component | Configuration |
+|-----------|---------------|
+| VPC | `jobportal-vpc`, `10.0.0.0/16`, DNS hostnames enabled |
+| Subnets | Public `10.0.1.0/24` (auto-assign public IP); private `10.0.2.0/24`; `ap-south-1a` |
+| Gateways | Internet Gateway; NAT Gateway + Elastic IP (created only when needed; hourly cost applies) |
+| Route tables | `rt-public`: `0.0.0.0/0` → IGW; `rt-private`: `0.0.0.0/0` → NAT; explicit associations |
+| Security groups | `w5-public-sg` (SSH/HTTP from admin IP); `w5-private-sg` (SSH from `w5-public-sg`) |
+| EC2 | Ubuntu 22.04, IMDSv2 required, cloud-init user data, gp3 root volume |
+| EBS | 20 GB gp3 data volume, ext4, mounted by UUID in `fstab` with `nofail` |
+| AMI | `jobportal-nginx-golden` (OS + Nginx; data disk kept separate) |
+| IAM | `ec2-jobportal` role via instance profile (S3 access + ECR read; no instance access keys) |
+| S3 | Account-specific `jobportal-static` bucket; versioning, public `GetObject` only on `static/*`, presigned URLs |
+| S3 lifecycle | `tmp/` and noncurrent versions expire after 30 days; incomplete multipart uploads aborted after 7 days |
+| Monitoring | CloudWatch CPU alarm (>70%, 2 × 1-minute periods) → SNS `jobportal-alerts` → email |
+| Auto Scaling | Launch template `jobportal-lt`; ASG `jobportal-asg` min 1 / max 3; target tracking CPU 60% |
+| Operations | Region audit and ordered teardown scripts; rebuild-from-memory practice documented in `docs/architecture/` |
+
+</details>
+
 ## Setup
 
 ### Prerequisites
@@ -208,6 +260,7 @@ python3 -m pytest -v
 | v1.1.0 | 2026-06-01 | Jenkins CI — automated pipeline on every push |
 | v1.2.0 | 2026-09-14 | Maven + Nexus + SonarQube — quality-gated pipeline |
 | v1.3.0 | TBD | Docker — multi-stage image, Compose stack, ECR, failure drills |
+| v1.4.0 | TBD | AWS Core — VPC, EC2/EBS/AMI, IAM role, S3, CloudWatch/SNS, Auto Scaling |
 
 ## Week-by-Week Progress
 
@@ -241,8 +294,8 @@ SonarQube code quality analysis, Quality Gate enforcement, and JUnit reporting.
 
 </details>
 
-<details open>
-<summary><strong>Week 4 — Docker · Current</strong></summary>
+<details>
+<summary><strong>Week 4 — Docker</strong></summary>
 
 Flask app containerised with a multi-stage Dockerfile (non-root), Docker networking,
 Compose stack with Postgres + Redis and named volumes, Docker Hub + ECR with git-SHA tags,
@@ -252,11 +305,23 @@ Jenkins Docker build + ECR push. Four failure simulations with written incident 
 
 </details>
 
-<details>
-<summary><strong>Week 5 — AWS Core · Coming next</strong></summary>
+<details open>
+<summary><strong>Week 5 — AWS Core · Current</strong></summary>
 
-VPC with public/private subnets, EC2 + EBS + AMI, IAM roles, S3, CloudWatch + SNS,
-and Auto Scaling.
+Custom VPC with public/private subnets, IGW, NAT, and route tables; EC2 with user data
+and IMDSv2; EBS volumes and golden AMIs; IAM roles via instance profiles; versioned S3
+with prefix-scoped public access, presigned URLs, and lifecycle rules; CloudWatch alarms
+→ SNS; Auto Scaling with target tracking. Infrastructure was destroyed and rebuilt from memory.
+
+**Resume:** *AWS: VPC, EC2, EBS, AMI, IAM roles, S3, SNS, CloudWatch, Auto Scaling.*
+
+</details>
+
+<details>
+<summary><strong>Week 6 — ECS · Coming next</strong></summary>
+
+Run JobPortal containers on ECS Fargate behind an Application Load Balancer, configure
+service auto scaling, retrieve secrets from SSM Parameter Store, and deploy with rolling updates.
 
 </details>
 
